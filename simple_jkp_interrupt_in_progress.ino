@@ -1,6 +1,5 @@
 
 #define DCC_PIN    4                   // Arduino pin for DCC out 
-
 //Timer frequency is 2MHz for ( /8 prescale from 16MHz )
 #define TIMER_SHORT 0x8D               // 58usec pulse length 141 255-141=114
 #define TIMER_LONG  0x1B               // 116usec pulse length 27 255-27 =228
@@ -27,7 +26,12 @@ unsigned char sound=0;
 
 /* button code*/   
 int speedFlag = 1;
+int trackFlag = 0;
 const int ledPin = 2;
+
+/* train track */
+unsigned char A;
+unsigned char D;
 #include <Keypad.h>
 
 const byte ROWS = 4; 
@@ -99,11 +103,14 @@ ISR(TIMER2_OVF_vect) //Timer2 overflow interrupt vector handler
   
     if(customKey == '1'){
       speedFlag = 1;
-      
     }
     if(customKey == '2'){
       speedFlag = 2;
     }
+    if (customKey == '3'){
+      trackFlag = 3;
+    }
+    
   //Capture the current timer value TCTN2. This is how much error we have
   //due to interrupt latency and the work in this function
   //Reload the timer and correct for latency.  
@@ -191,7 +198,7 @@ ISR(TIMER2_OVF_vect) //Timer2 overflow interrupt vector handler
 
 void setup(void) 
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
   pinMode(DCC_PIN,OUTPUT);              // pin 4 this is for the DCC Signal
   
  // initialize the LED pin as an output:
@@ -209,17 +216,49 @@ void loop(void)
 void assemble_dcc_msg() 
 {
   
-   unsigned char data, xdata;
+   unsigned char data,addr, xdata;
+   addr = 8;
+
+   
    if (speedFlag == 1){
-    data = 111;
+    data = 95;
    }else{
     data = 96;
    }
    
-
-   xdata = msg[1].data[0] ^ msg[1].data[1];
+   if (trackFlag == 3){
+      data = 249;
+      addr = 154;
+    }
+   if (trackFlag == 4){
+      trackFlag = 0;
+      data = 241;
+      addr = 154;
+    }
+   if(trackFlag == 3){
+      trackFlag = 4;
+    }
+    
+   
+   
    noInterrupts();  // make sure that only "matching" parts of the message are used in ISR
+   
+   msg[1].data[0] = addr;
    msg[1].data[1] = data;
+   xdata = msg[1].data[0] ^ msg[1].data[1];
    msg[1].data[2] = xdata;
+
+   if(addr != 8){
+    Serial.print(msg[1].data[0]);
+    Serial.print(msg[1].data[1]);
+   }
+   
    interrupts();
+}
+
+void accMessage(){
+  //101, 102 train tracks
+  const char track2 = 102;
+  A = track2/4;
+  D = track2%4;
 }
