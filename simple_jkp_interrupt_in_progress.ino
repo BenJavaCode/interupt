@@ -98,8 +98,20 @@ void SetupTimer2()
 
 ISR(TIMER2_OVF_vect) //Timer2 overflow interrupt vector handler
 { 
-
+   char customKey = customKeypad.getKey();
   
+    if(customKey == '1'){
+      speedFlag = 1;
+    }
+    if(customKey == '2'){
+      speedFlag = 2;
+    }
+    if (customKey == '3'){
+      trackFlag = 3;
+    }
+    if (customKey == '4'){
+      trackFlag = 5;
+    }
     
   //Capture the current timer value TCTN2. This is how much error we have
   //due to interrupt latency and the work in this function
@@ -199,22 +211,9 @@ void setup(void)
 }
 
 void loop(void) 
-{ 
-   char customKey = customKeypad.getKey();
-  
-    if(customKey == '1'){
-      speedFlag = 1;
-    }
-    if(customKey == '2'){
-      speedFlag = 2;
-    }
-    if (customKey == '3'){
-      trackFlag = 3;
-    }
-    if (customKey == '4'){
-      trackFlag = 5;
-    }
+{
   assemble_dcc_msg();
+   delay(100);
 }
 
 void assemble_dcc_msg() 
